@@ -35,11 +35,7 @@ if (!camera) {
     camera.addComponent(cam);
 }
 
-// Get camera component once for convenience
-const camComponent = camera.getComponentOfType(Camera);
-
 function render() {
-    // The engine should automatically compute the camera view from its transform
     renderer.render(scene, camera);
 }
 
@@ -55,13 +51,14 @@ if (!cat) throw new Error('Cat model not found');
 const catTransform = cat.getComponentOfType(Transform);
 
 const lerp = (start, end, t) => start + (end - start) * t;
-const cameraTarget = [0.2, 0, 0.7];
+const cameraTarget = [0, 0.3, 0.9];
+let rotation_speed = 0.01;
 
 new UpdateSystem({
     render: () => {
         // Rotate 90 degrees around Y axis
         const axis = [0, 1, 0]; // Y-axis
-        const angle = Math.PI*0.01; // 90 degrees in radians
+        const angle = Math.PI*rotation_speed; // 90 degrees in radians
         const rotationQuat = quat.setAxisAngle(quat.create(), axis, angle);
 
         const ease = 0.1; // 0 = no move, 1 = instant move
@@ -77,12 +74,14 @@ new UpdateSystem({
 
 new ResizeSystem({ canvas, resize }).start();
 
-document.addEventListener('keyup', function(event) {
+document.addEventListener('keydown', function(event) {
     if (event.key === "Shift") cameraTarget[1] -= 0.1;
     if (event.key === " ") cameraTarget[1] += 0.1;
     if (event.key === "a") cameraTarget[0] -= 0.1;
     if (event.key === "d") cameraTarget[0] += 0.1;
     if (event.key === "s") cameraTarget[2] += 0.1;
     if (event.key === "w") cameraTarget[2] -= 0.1;
+    if (event.key === "ArrowUp") rotation_speed += 0.01;
+    if (event.key === "ArrowDown") rotation_speed -= 0.01;
     console.log(t.translation);
 });
