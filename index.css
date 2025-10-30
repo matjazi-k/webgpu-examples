@@ -1,9 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300&family=Outfit:wght@100..900&display=swap');
+
 * {
     font-family: sans-serif;
 }
 
+h1, h2, h3 {
+    font-family: "Outfit", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
+}
+
 body {
-    margin: 10px;
+    margin: 20px;
 }
 
 ul {
@@ -16,10 +25,19 @@ li {
     padding: 5px;
 }
 
+a, p {
+    font-family: "Lexend", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+}
+
 a {
     color: black;
     text-decoration: none;
     padding: 5px;
+    border-radius: 10px;
+    transition: all 0.2s;
 }
 
 a:hover {
