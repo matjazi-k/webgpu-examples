@@ -12,13 +12,12 @@ export class FirstPerson3dController {
         maxSpeed = 5,
         decay = 0.99999,
         pointerSensitivity = 0.002,
-        gravity = -30,
-        jumpStrength = 10,
+        gravity = -22,
+        jumpStrength = 15,
+        defaultGroundLevel = 0.3,
     } = {}) {
         this.entity = entity;
         this.domElement = domElement;
-
-        this.keys = {};
 
         this.pitch = pitch;
         this.yaw = yaw;
@@ -33,7 +32,9 @@ export class FirstPerson3dController {
         this.gravity = gravity;
         this.jumpStrength = jumpStrength;
         this.grounded = true;
+        this.defaultGroundLevel = defaultGroundLevel;
 
+        this.keys = {};
         this.initHandlers();
     }
 
@@ -67,18 +68,10 @@ export class FirstPerson3dController {
 
         // Map user input to the acceleration vector.
         const acc = vec3.create();
-        if (this.keys['KeyW']) {
-            vec3.add(acc, acc, forward);
-        }
-        if (this.keys['KeyS']) {
-            vec3.sub(acc, acc, forward);
-        }
-        if (this.keys['KeyD']) {
-            vec3.add(acc, acc, right);
-        }
-        if (this.keys['KeyA']) {
-            vec3.sub(acc, acc, right);
-        }
+        if (this.keys['KeyW']) vec3.add(acc, acc, forward);
+        if (this.keys['KeyS']) vec3.sub(acc, acc, forward);
+        if (this.keys['KeyD']) vec3.add(acc, acc, right);
+        if (this.keys['KeyA']) vec3.sub(acc, acc, right);
 
         // Update velocity based on acceleration.
         vec3.scaleAndAdd(this.velocity, this.velocity, acc, dt * this.acceleration);
@@ -101,8 +94,14 @@ export class FirstPerson3dController {
 
         const transform = this.entity.getComponentOfType(Transform);
         if (transform) {
-            // Apply gravity
-            this.verticalVelocity += this.gravity * dt
+
+            if (transform.translation[1] <= this.defaultGroundLevel) {
+                transform.translation[1] = this.defaultGroundLevel;
+                this.verticalVelocity = 0;
+                this.grounded = true;
+            }
+
+            if (!this.grounded) this.verticalVelocity += this.gravity * dt;
 
             if (this.keys['Space'] && this.grounded) {
                 this.verticalVelocity = this.jumpStrength;
@@ -110,21 +109,16 @@ export class FirstPerson3dController {
             }
 
             // Update translation based on velocity.
-            vec3.scaleAndAdd(transform.translation,
-                transform.translation, this.velocity, dt);
+            vec3.scaleAndAdd(transform.translation, transform.translation, this.velocity, dt);
             transform.translation[1] += this.verticalVelocity * dt;
-
-            if (transform.translation[1] <= 0) {
-                transform.translation[1] = 0;
-                this.verticalVelocity = 0;
-                this.grounded = true;
-            }
 
             // Update rotation based on the Euler angles.
             const rotation = quat.create();
             quat.rotateY(rotation, rotation, this.yaw);
             quat.rotateX(rotation, rotation, this.pitch);
             transform.rotation = rotation;
+
+            this.grounded = false;
         }
     }
 
@@ -150,4 +144,25 @@ export class FirstPerson3dController {
         this.keys[e.code] = false;
     }
 
+    handleCollisions(collisions) {
+        // Reset grounded each frame
+        this.grounded = false;
+        this.groundInfo = null;
+
+        for (const c of collisions) {
+            // if the collision normal points upward more than sideways,
+            // we can consider it a "floor" contact
+            if (c.normal[1] > 0.5) {
+                this.grounded = true;
+                this.verticalVelocity = 0;
+
+                // store info about what we’re standing on
+                this.groundInfo = {
+                    entity: c.entityB,
+                    normal: c.normal,
+                    penetration: c.penetration,
+                };
+            }
+        }
+    }
 }

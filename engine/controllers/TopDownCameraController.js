@@ -78,4 +78,17 @@ export class TopDownCameraController {
 
         cameraTransform.rotation = rotation;
     }
+
+    getForwardVector() {
+        const cameraTransform = this.camera.getComponentOfType(Transform);
+        const targetTransform = this.target.getComponentOfType(Transform);
+
+        if (!cameraTransform || !targetTransform) return vec3.fromValues(0, 0, -1);
+
+        const forward = vec3.create();
+        vec3.sub(forward, targetTransform.translation, cameraTransform.translation);
+        forward[1] = 0; // ignore vertical tilt
+        vec3.normalize(forward, forward);
+        return forward;
+    }
 }
